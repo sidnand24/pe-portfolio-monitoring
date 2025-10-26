@@ -1,0 +1,292 @@
+version: 2
+
+sources:
+  - name: raw_data
+    description: Raw data from Excel file - PE portfolio monitoring star schema
+    schema: raw_data
+    tables:
+      # ===================
+      # DIMENSION TABLES
+      # ===================
+      
+      - name: dim_company
+        description: Portfolio company master data including industry, location, and employee information
+        columns:
+          - name: company_id
+            description: Primary key - unique identifier for each company
+            tests:
+              - unique
+              - not_null
+          - name: company_name
+            description: Company name
+            tests:
+              - not_null
+          - name: legal_name
+            description: Legal name of the company
+          - name: industry
+            description: Industry classification
+          - name: subindustry
+            description: Sub-industry classification
+          - name: hq_city
+            description: Headquarters city
+          - name: hq_country
+            description: Headquarters country
+          - name: website
+            description: Company website URL
+          - name: founded_year
+            description: Year the company was founded
+          - name: employees
+            description: Number of employees
+      
+      - name: dim_fund
+        description: PE fund information including vintage year
+        columns:
+          - name: fund_id
+            description: Primary key - unique identifier for each fund
+            tests:
+              - unique
+              - not_null
+          - name: fund_name
+            description: Fund name
+            tests:
+              - not_null
+          - name: vintage_year
+            description: Year the fund was established
+      
+      - name: dim_date
+        description: Date dimension for time-based analysis with monthly granularity
+        columns:
+          - name: date_id
+            description: Primary key - date in YYYYMMDD integer format (e.g., 20230101)
+            tests:
+              - unique
+              - not_null
+          - name: date
+            description: Actual date value (first day of month)
+          - name: year
+            description: Year (e.g., 2023)
+          - name: month
+            description: Month number (1-12)
+          - name: quarter
+            description: Quarter (1-4)
+          - name: year_month
+            description: Year-month in YYYY-MM format (e.g., 2023-01)
+          - name: month_name
+            description: Full month name (e.g., January)
+          - name: day_of_week
+            description: Day of week (0=Monday, 6=Sunday)
+          - name: is_month_end
+            description: Boolean indicating if date is month end
+          - name: is_quarter_end
+            description: Boolean indicating if date is quarter end
+          - name: is_year_end
+            description: Boolean indicating if date is year end
+      
+      - name: dim_kpi
+        description: KPI dimension containing unique KPI names (varies by company)
+        columns:
+          - name: kpi_id
+            description: Primary key - auto-generated unique identifier for each KPI
+            tests:
+              - unique
+              - not_null
+          - name: kpi_name
+            description: Name of the KPI (e.g., ARPU, Churn Rate, Capacity Factor)
+            tests:
+              - unique
+              - not_null
+      
+      - name: dim_investment
+        description: Investment dimension tracking company-fund portfolio composition
+        columns:
+          - name: investment_id
+            description: Primary key - auto-generated unique identifier for each investment
+            tests:
+              - unique
+              - not_null
+          - name: company_id
+            description: Foreign key to dim_company
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_company')
+                  field: company_id
+          - name: fund_id
+            description: Foreign key to dim_fund
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_fund')
+                  field: fund_id
+          - name: investment_date
+            description: Date of investment
+          - name: ownership_type
+            description: Type of ownership (e.g., Majority, Minority)
+      
+      # ===================
+      # FACT TABLES
+      # ===================
+      
+      - name: fact_financials_monthly
+        description: Monthly financial metrics in EUR millions
+        columns:
+          - name: financial_id
+            description: Primary key - auto-generated unique identifier
+            tests:
+              - unique
+              - not_null
+          - name: company_id
+            description: Foreign key to dim_company
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_company')
+                  field: company_id
+          - name: date_id
+            description: Foreign key to dim_date (YYYYMMDD format)
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_date')
+                  field: date_id
+          - name: revenue
+            description: Total revenue in EUR millions
+          - name: cogs
+            description: Cost of goods sold in EUR millions
+          - name: gross_profit
+            description: Gross profit in EUR millions
+          - name: ebitda
+            description: EBITDA in EUR millions
+          - name: depreciation
+            description: Depreciation in EUR millions
+          - name: amortization
+            description: Amortization in EUR millions
+          - name: ebita
+            description: EBITA in EUR millions
+          - name: ebit
+            description: EBIT in EUR millions
+          - name: net_income
+            description: Net income in EUR millions
+          - name: cash_from_ops
+            description: Cash from operations in EUR millions
+          - name: capex
+            description: Capital expenditures in EUR millions
+          - name: ebitda_margin_pct
+            description: EBITDA margin percentage
+          - name: working_capital
+            description: Working capital in EUR millions
+          - name: net_debt
+            description: Net debt in EUR millions
+          - name: currency
+            description: Currency (default EUR)
+      
+      - name: fact_kpis_monthly
+        description: Monthly KPI values (varies by company - operational metrics)
+        columns:
+          - name: kpi_fact_id
+            description: Primary key - auto-generated unique identifier
+            tests:
+              - unique
+              - not_null
+          - name: company_id
+            description: Foreign key to dim_company
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_company')
+                  field: company_id
+          - name: date_id
+            description: Foreign key to dim_date (YYYYMMDD format)
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_date')
+                  field: date_id
+          - name: kpi_id
+            description: Foreign key to dim_kpi
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_kpi')
+                  field: kpi_id
+          - name: kpi_value
+            description: Value of the KPI for this company-date combination
+      
+      - name: fact_budget
+        description: Annual budget data for portfolio companies
+        columns:
+          - name: budget_id
+            description: Primary key - auto-generated unique identifier
+            tests:
+              - unique
+              - not_null
+          - name: company_id
+            description: Foreign key to dim_company
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_company')
+                  field: company_id
+          - name: fiscal_year
+            description: Fiscal year for the budget
+            tests:
+              - not_null
+          - name: currency
+            description: Currency of budget figures
+          - name: revenue_budget
+            description: Budgeted revenue in EUR millions
+          - name: cogs_budget
+            description: Budgeted COGS in EUR millions
+          - name: gross_profit_budget
+            description: Budgeted gross profit in EUR millions
+          - name: ebitda_budget
+            description: Budgeted EBITDA in EUR millions
+          - name: depreciation_budget
+            description: Budgeted depreciation in EUR millions
+          - name: amortization_budget
+            description: Budgeted amortization in EUR millions
+          - name: ebita_budget
+            description: Budgeted EBITA in EUR millions
+          - name: ebit_budget
+            description: Budgeted EBIT in EUR millions
+          - name: net_income_budget
+            description: Budgeted net income in EUR millions
+          - name: cash_from_ops_budget
+            description: Budgeted cash from operations in EUR millions
+          - name: capex_budget
+            description: Budgeted capex in EUR millions
+          - name: working_capital_budget
+            description: Budgeted working capital in EUR millions
+          - name: net_debt_budget
+            description: Budgeted net debt in EUR millions
+      
+      - name: fact_comments
+        description: Portfolio company comments and notes from various stakeholders
+        columns:
+          - name: comment_id
+            description: Primary key - auto-generated unique identifier
+            tests:
+              - unique
+              - not_null
+          - name: company_id
+            description: Foreign key to dim_company
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_company')
+                  field: company_id
+          - name: date_id
+            description: Foreign key to dim_date (YYYYMMDD format)
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw_data', 'dim_date')
+                  field: date_id
+          - name: author
+            description: Name of the person who wrote the comment
+            tests:
+              - not_null
+          - name: role
+            description: Role of the author
+          - name: comment_text
+            description: The actual comment text
