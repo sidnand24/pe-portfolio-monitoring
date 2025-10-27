@@ -46,6 +46,8 @@ performance as (
         f.revenue,
         f.gross_profit,
         f.gross_margin_pct,
+        f.operating_expenses,
+        f.opex_pct_of_revenue,
         f.ebitda,
         f.ebitda_margin,
         f.net_income,

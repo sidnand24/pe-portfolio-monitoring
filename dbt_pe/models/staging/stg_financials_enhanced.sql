@@ -247,7 +247,17 @@ calculations as (
             when revenue > 0 then
                 round((gross_profit / revenue * 100)::numeric, 2)
             else null
-        end as gross_margin_pct
+        end as gross_margin_pct,
+        
+        -- Operating Expenses
+        gross_profit - ebitda as operating_expenses,
+        
+        -- OpEx as % of Revenue
+        case 
+            when revenue > 0 then
+                round(((gross_profit - ebitda) / revenue * 100)::numeric, 2)
+            else null
+        end as opex_pct_of_revenue
         
     from with_ytd
 ),
