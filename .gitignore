@@ -208,3 +208,5 @@ __marimo__/
 
 pgdata/
 .DS_Store
+# Ignore Excel temporary files
+~$*.xls*

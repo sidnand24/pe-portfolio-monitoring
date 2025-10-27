@@ -241,7 +241,13 @@ calculations as (
             when employees > 0 then
                 round((revenue / employees)::numeric, 2)
             else null
-        end as revenue_per_employee
+        end as revenue_per_employee,
+        
+        case 
+            when revenue > 0 then
+                round((gross_profit / revenue * 100)::numeric, 2)
+            else null
+        end as gross_margin_pct
         
     from with_ytd
 ),

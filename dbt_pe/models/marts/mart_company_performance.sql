@@ -44,6 +44,8 @@ performance as (
         f.month,
         f.year_month,
         f.revenue,
+        f.gross_profit,
+        f.gross_margin_pct,
         f.ebitda,
         f.ebitda_margin,
         f.net_income,
