@@ -297,35 +297,56 @@ if selected_company_id == 'C001':
                 horizontal_spacing=0.15
             )
             
+            # Revenue Chart - Actual line with quarterly labels
+            text_labels_rev = [f"€{val:.1f}M" if pd.notna(val) and pd.to_datetime(date).month in [3, 6, 9, 12] else "" 
+                               for date, val in zip(budget_df_2024['year_month'], budget_df_2024['actual_revenue'])]
             fig_budget.add_trace(
-                go.Bar(x=budget_df_2024['year_month'], y=budget_df_2024['actual_revenue'],
-                      name='Actual', marker_color='#1f77b4'),
+                go.Scatter(x=budget_df_2024['year_month'], y=budget_df_2024['actual_revenue'],
+                          name='Actual', line=dict(color='#67EBF5', width=2),
+                          mode='lines+markers+text',
+                          text=text_labels_rev,
+                          textposition='top center', textfont=dict(size=9),
+                          hovertemplate='Actual Revenue: €%{y:.2f}M<extra></extra>'),
                 row=1, col=1
             )
             fig_budget.add_trace(
-                go.Bar(x=budget_df_2024['year_month'], y=budget_df_2024['budget_revenue'],
-                      name='Budget', marker_color='lightblue', opacity=0.6),
+                go.Scatter(x=budget_df_2024['year_month'], y=budget_df_2024['budget_revenue'],
+                          name='Budget', line=dict(color='#FF6B6B', width=2),
+                          mode='lines+markers',
+                          opacity=0.7,
+                          hovertemplate='Budget Revenue: €%{y:.2f}M<extra></extra>'),
                 row=1, col=1
             )
             
+            # EBITDA Chart - Actual line with quarterly labels
+            text_labels_ebitda = [f"€{val:.1f}M" if pd.notna(val) and pd.to_datetime(date).month in [3, 6, 9, 12] else "" 
+                                  for date, val in zip(budget_df_2024['year_month'], budget_df_2024['actual_ebitda'])]
             fig_budget.add_trace(
-                go.Bar(x=budget_df_2024['year_month'], y=budget_df_2024['actual_ebitda'],
-                      name='Actual', marker_color='#ff7f0e', showlegend=False),
+                go.Scatter(x=budget_df_2024['year_month'], y=budget_df_2024['actual_ebitda'],
+                          name='Actual', line=dict(color='#67EBF5', width=2),
+                          mode='lines+markers+text',
+                          text=text_labels_ebitda,
+                          textposition='top center', textfont=dict(size=9),
+                          showlegend=False,
+                          hovertemplate='Actual EBITDA: €%{y:.2f}M<extra></extra>'),
                 row=1, col=2
             )
             fig_budget.add_trace(
-                go.Bar(x=budget_df_2024['year_month'], y=budget_df_2024['budget_ebitda'],
-                      name='Budget', marker_color='lightsalmon', opacity=0.6, showlegend=False),
+                go.Scatter(x=budget_df_2024['year_month'], y=budget_df_2024['budget_ebitda'],
+                          name='Budget', line=dict(color='#FF6B6B', width=2),
+                          mode='lines+markers',
+                          opacity=0.7,
+                          showlegend=False,
+                          hovertemplate='Budget EBITDA: €%{y:.2f}M<extra></extra>'),
                 row=1, col=2
             )
             
-            fig_budget.update_xaxes(type='date', tickformat='%b %y')
+            fig_budget.update_xaxes(showgrid=False, type='date', tickformat='%b %y')
             fig_budget.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(211, 211, 211, 0.2)')
             
             fig_budget.update_layout(
                 height=400,
                 showlegend=True,
-                barmode='group',
                 hovermode='x unified'
             )
             
